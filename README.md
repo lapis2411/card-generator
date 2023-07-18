@@ -1,5 +1,5 @@
 # card-generator
-
+git clone https://github.com/lapis2411/card-generator
 cd ./cmd
 go build main.go -o genetare
 
