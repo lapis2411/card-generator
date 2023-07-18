@@ -1,0 +1,4 @@
+name,font_size,x,y,color_r,color_g,color_b,color_a
+title,80,80,100,255,0,0,255
+description,60,100,600,100,150,200,255
+cost,50,500,100,0,0,0,255

@@ -1,4 +1,4 @@
-package main
+package generator
 
 import (
 	"fmt"
@@ -115,7 +115,7 @@ func TestGenerate(t *testing.T) {
 		},
 	}
 
-	outputdir := "../temporary/"
+	outputdir := "./temporary/"
 
 	files, _ := ioutil.ReadDir(outputdir)
 	if files != nil {
@@ -140,7 +140,8 @@ func TestGenerate(t *testing.T) {
 	}()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := Generate(tt.args.cards)
+			g := BuildGenerator("", "")
+			err := g.Generate(tt.args.cards)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Generate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -223,6 +224,7 @@ func wantGeneration() {
 		},
 	}
 
-	Generate(cards)
+	g := BuildGenerator("./generator_maked/", "")
+	g.Generate(cards)
 
 }

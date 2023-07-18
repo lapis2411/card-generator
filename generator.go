@@ -1,4 +1,4 @@
-package main
+package generator
 
 import (
 	"bufio"
@@ -8,6 +8,7 @@ import (
 	"image/png"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
@@ -17,8 +18,8 @@ const (
 	widthCard    = 600
 	heightCard   = 800
 	defaultWidth = 30
-	output       = "../temporary/"
-	fontPath     = "../static/fonts/AP.ttf"
+	// output       = "../temporary/"
+	// fontPath     = "../static/fonts/AP.ttf"
 )
 
 var border = color.RGBA{R: 0x55, G: 0x3a, B: 0xed, A: 0xff}
@@ -29,12 +30,34 @@ type (
 		Width  int
 		Height int
 	}
+	Generator struct {
+		output   string
+		fontPath string
+	}
 )
 
-func Generate(cards Cards) error {
+func BuildGenerator(output, fontPath string) Generator {
+	if output == "" {
+		output = "./temporary/"
+	}
+	if fontPath == "" {
+		fontPath = "./static/fonts/AP.ttf"
+	}
+	return Generator{
+		output:   output,
+		fontPath: fontPath,
+	}
+}
+
+func (g Generator) Generate(cards Cards) error {
+	folder := filepath.Dir(g.output)
+	err := os.MkdirAll(folder, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create folder(%s): %w", folder, err)
+	}
 	for name, card := range cards {
-		if err := generateCard(*card, name, widthCard, heightCard); err != nil {
-			return err
+		if err := g.generateCard(*card, name, widthCard, heightCard); err != nil {
+			return fmt.Errorf("failed to generate card(%s): %w", name, err)
 		}
 	}
 	return nil
@@ -45,7 +68,7 @@ func Generate(cards Cards) error {
 // TODO: FontSizeと文字の位置に応じてフォントサイズや改行を調整する
 // 例えばタイトルが長くなりそうな時は2行にしてフォントを小さくする、など
 // 描画領域を指定する形のほうがよさげか？いずれにしてもサイトがざっとできてから着手
-func generateCard(c Card, name string, width, height int) error {
+func (g Generator) generateCard(c Card, name string, width, height int) error {
 	img, err := templateCard(border, Size{width, height}, defaultWidth)
 	if err != nil {
 		return fmt.Errorf("failed to generate card(%s): %w", name, err)
@@ -53,7 +76,7 @@ func generateCard(c Card, name string, width, height int) error {
 	// Cardにしたがって、画像に文字を書き込む
 	for _, s := range c.styledTexts {
 		points := s.Point26_6()
-		ff, err := fontFace(truetype.Options{Size: s.style.fontsize})
+		ff, err := fontFace(g.fontPath, truetype.Options{Size: s.style.fontsize})
 		if err != nil {
 			return fmt.Errorf("failed to generate fontface(%s): %w", name, err)
 		}
@@ -66,7 +89,7 @@ func generateCard(c Card, name string, width, height int) error {
 		d.DrawString(s.text)
 	}
 
-	fn := "../temporary/" + name + ".png"
+	fn := g.output + name + ".png"
 	if err := exportImage(fn, img); err != nil {
 		return fmt.Errorf("failed to export card(%s): %w", name, err)
 	}
@@ -95,7 +118,7 @@ func isBorder(size Size, x, y, width int) bool {
 	return x < width || x >= size.Width-width || y < width || y >= size.Height-width
 }
 
-func fontFace(opt truetype.Options) (font.Face, error) {
+func fontFace(fontPath string, opt truetype.Options) (font.Face, error) {
 	// need japanese font to write japanese
 	ftBin, err := ioutil.ReadFile(fontPath)
 	if err != nil {
