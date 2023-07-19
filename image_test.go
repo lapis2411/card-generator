@@ -1,10 +1,8 @@
 package generator
 
 import (
-	"fmt"
 	"image"
 	"image/color"
-	"image/png"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -43,7 +41,7 @@ func TestTemplateCard(t *testing.T) {
 				t.Errorf("templateCard() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			want, err := decodeImage(tt.want)
+			want, err := DecodeImage(tt.want)
 			if err != nil {
 				t.Errorf("want image decode error = %v", err)
 				return
@@ -146,16 +144,16 @@ func TestGenerate(t *testing.T) {
 				t.Errorf("Generate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			im := make(map[string]*image.RGBA, len(tt.want))
+			im := make(map[string]image.Image, len(tt.want))
 			for k, p := range tt.want {
-				im[k], err = decodeImage(p)
+				im[k], err = DecodeImage(p)
 				if err != nil {
 					t.Errorf("want image decode error = %v", err)
 					return
 				}
 			}
 			for k, v := range im {
-				got, err := decodeImage("../temporary/" + k + ".png")
+				got, err := DecodeImage("../temporary/" + k + ".png")
 				if err != nil {
 					t.Errorf("got image decode error = %v", err)
 					return
@@ -167,24 +165,6 @@ func TestGenerate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func decodeImage(path string) (*image.RGBA, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open file(%s): %v", path, err)
-	}
-	defer f.Close()
-
-	img, err := png.Decode(f)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode image: %v", err)
-	}
-	rgba, ok := img.(*image.RGBA)
-	if !ok {
-		return nil, fmt.Errorf("failed to convert image to RGBA")
-	}
-	return rgba, nil
 }
 
 // generate card image for test

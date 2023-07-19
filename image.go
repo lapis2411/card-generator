@@ -148,3 +148,21 @@ func exportImage(path string, image image.Image) error {
 	}
 	return nil
 }
+
+func DecodeImage(path string) (image.Image, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file(%s): %v", path, err)
+	}
+	defer f.Close()
+
+	img, err := png.Decode(f)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode image: %v", err)
+	}
+	rgba, ok := img.(*image.RGBA)
+	if !ok {
+		return nil, fmt.Errorf("failed to convert image to RGBA")
+	}
+	return rgba, nil
+}
