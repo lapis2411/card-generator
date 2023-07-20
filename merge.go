@@ -8,6 +8,19 @@ import (
 	"path/filepath"
 )
 
+const (
+	buffer = 10 // buffer for cut cards
+)
+
+type (
+	BaseLayer struct {
+		Image image.RGBA
+	}
+	Canvas interface {
+		OverwriteImage(image.Image, image.Point) error
+	}
+)
+
 var sizeA4 = Size{
 	Width:  2480,
 	Height: 3508,
@@ -23,10 +36,10 @@ func MergeCards(dir string) error {
 
 // MergeCards merges cards into one image.
 func mergeCards(dir string, paperSize, cardSize Size) error {
-	row := paperSize.Width / cardSize.Width
-	column := paperSize.Height / cardSize.Height
+	row := paperSize.Width / (cardSize.Width + buffer)
+	column := paperSize.Height / (cardSize.Height + buffer)
 	img := clearA4(paperSize)
-	imgs := make(map[int]image.Image, 1)
+	imgsA4 := make(map[int]image.Image, 1)
 	cnt := 0
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -67,10 +80,20 @@ func clearA4(size Size) image.Image {
 	return img
 }
 
-func mergeImage(imgs map[int]image.Image, size Size) image.Image {
-	img := clearA4(size)
-	for _, v := range imgs {
-		// img = drawImage(img, v)
+func (b *BaseLayer) OverwriteImage(writeImg image.Image, start image.Point) error {
+	bnd := writeImg.Bounds()
+	w := bnd.Max.X - bnd.Min.X
+	h := bnd.Max.Y - bnd.Min.Y
+	if b.Image.Bounds().Max.X < start.X+w || b.Image.Bounds().Max.Y < start.Y+h {
+		return fmt.Errorf("out of bounds: %d, %d", start.X+w, start.Y+h)
 	}
-	return img
+
+	for x := start.X; x < start.X+w; x++ {
+		for y := start.Y; y < start.Y+h; y++ {
+			px := x - start.X
+			py := y - start.Y
+			b.Image.Set(x, y, writeImg.At(px, py))
+		}
+	}
+	return nil
 }
