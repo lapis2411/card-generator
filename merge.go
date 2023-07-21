@@ -14,7 +14,7 @@ const (
 
 type (
 	BaseLayer struct {
-		Image image.RGBA
+		Image *image.RGBA
 	}
 	Canvas interface {
 		OverwriteImage(image.Image, image.Point) error
@@ -38,18 +38,34 @@ func MergeCards(dir string) error {
 func mergeCards(dir string, paperSize, cardSize Size) error {
 	row := paperSize.Width / (cardSize.Width + buffer)
 	column := paperSize.Height / (cardSize.Height + buffer)
-	img := clearA4(paperSize)
-	imgsA4 := make(map[int]image.Image, 1)
+	imgA4 := make([]BaseLayer, 1)
 	cnt := 0
+	page := 0
+	imgA4[page] = NewLayer(paperSize)
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("error walking the path %v: %w\n", dir, err)
 		}
 		if !info.IsDir() {
 			// どこから書き出すか？
-			x := (cnt % row) * cardSize.Width
-			y := (cnt / row) * cardSize.Height
-			// 次ここから開発
+			if cnt >= row*column {
+				cnt = 0
+				page++
+				imgA4 = append(imgA4, NewLayer(paperSize))
+			}
+			img, err := DecodeImage(path)
+			if err != nil {
+				return fmt.Errorf("failed to decode image(%s): %w", path, err)
+			}
+			cr := (cnt % row)
+			cc := (cnt / row)
+			x := cr * cardSize.Width
+			y := cc * (cnt / row) * cardSize.Height
+			if err = imgA4[page].OverwriteImage(img, image.Point{X: x, Y: y}); err != nil {
+				return fmt.Errorf("failed to overwrite image(%s): %w", path, err)
+			}
+
+			cnt++
 		}
 		return nil
 	})
@@ -59,15 +75,18 @@ func mergeCards(dir string, paperSize, cardSize Size) error {
 	}
 
 	// ファイルに保存
-	od := "./tmp1.png"
-	if err := exportImage(od, img); err != nil {
-		return fmt.Errorf("failed to export card(%s): %w", od, err)
+	od := "./tmp%s.png"
+	for i, img := range imgA4 {
+		p := fmt.Sprintf(od, i)
+		if err := exportImage(p, img.Image); err != nil {
+			return fmt.Errorf("failed to export card(%s): %w", od, err)
+		}
 	}
 
 	return nil
 }
 
-func clearA4(size Size) image.Image {
+func clearA4(size Size) *image.RGBA {
 
 	img := image.NewRGBA(image.Rect(0, 0, size.Width, size.Height))
 
@@ -80,6 +99,11 @@ func clearA4(size Size) image.Image {
 	return img
 }
 
+func NewLayer(size Size) BaseLayer {
+	return BaseLayer{
+		Image: clearA4(size),
+	}
+}
 func (b *BaseLayer) OverwriteImage(writeImg image.Image, start image.Point) error {
 	bnd := writeImg.Bounds()
 	w := bnd.Max.X - bnd.Min.X
