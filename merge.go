@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	buffer = 10 // buffer for cut cards
+	buffer = 15 // buffer for cut cards
 )
 
 type (
@@ -21,6 +21,7 @@ type (
 	}
 )
 
+// 350dpi
 var sizeA4 = Size{
 	Width:  2480,
 	Height: 3508,
@@ -59,8 +60,8 @@ func mergeCards(dir string, paperSize, cardSize Size) error {
 			}
 			cr := (cnt % row)
 			cc := (cnt / row)
-			x := cr * cardSize.Width
-			y := cc * (cnt / row) * cardSize.Height
+			x := cr*(cardSize.Width+buffer) + buffer/2
+			y := cc*(cardSize.Height+buffer) + buffer/2
 			if err = imgA4[page].OverwriteImage(img, image.Point{X: x, Y: y}); err != nil {
 				return fmt.Errorf("failed to overwrite image(%s): %w", path, err)
 			}
@@ -75,7 +76,7 @@ func mergeCards(dir string, paperSize, cardSize Size) error {
 	}
 
 	// ファイルに保存
-	od := "./tmp%s.png"
+	od := "./tmp_%d.png"
 	for i, img := range imgA4 {
 		p := fmt.Sprintf(od, i)
 		if err := exportImage(p, img.Image); err != nil {
@@ -86,7 +87,7 @@ func mergeCards(dir string, paperSize, cardSize Size) error {
 	return nil
 }
 
-func clearA4(size Size) *image.RGBA {
+func whitePaper(size Size) *image.RGBA {
 
 	img := image.NewRGBA(image.Rect(0, 0, size.Width, size.Height))
 
@@ -101,9 +102,10 @@ func clearA4(size Size) *image.RGBA {
 
 func NewLayer(size Size) BaseLayer {
 	return BaseLayer{
-		Image: clearA4(size),
+		Image: whitePaper(size),
 	}
 }
+
 func (b *BaseLayer) OverwriteImage(writeImg image.Image, start image.Point) error {
 	bnd := writeImg.Bounds()
 	w := bnd.Max.X - bnd.Min.X
