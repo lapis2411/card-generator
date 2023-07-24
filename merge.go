@@ -13,12 +13,10 @@ const (
 )
 
 type (
-	BaseLayer struct {
+	Canvas struct {
 		Image *image.RGBA
 	}
-	Canvas interface {
-		OverwriteImage(image.Image, image.Point) error
-	}
+	Canvases []Canvas
 )
 
 // 350dpi
@@ -31,18 +29,21 @@ var sizeCard = Size{
 	Height: heightCard,
 }
 
-func MergeCards(dir string) error {
-	return mergeCards(dir, sizeA4, sizeCard)
+// MergeCards merges cards into A4 size(350dpi) images of under the dir.
+func MergeCards(dir string, outDir string) error {
+	if outDir == "" {
+		outDir = "./out"
+	}
+	return mergeCards(dir, outDir, sizeA4, sizeCard)
 }
 
-// MergeCards merges cards into one image.
-func mergeCards(dir string, paperSize, cardSize Size) error {
+func mergeCards(dir, outDir string, paperSize, cardSize Size) error {
 	row := paperSize.Width / (cardSize.Width + buffer)
 	column := paperSize.Height / (cardSize.Height + buffer)
-	imgA4 := make([]BaseLayer, 1)
+	canvases := make(Canvases, 1)
 	cnt := 0
 	page := 0
-	imgA4[page] = NewLayer(paperSize)
+	canvases[page] = NewLayer(paperSize)
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("error walking the path %v: %w\n", dir, err)
@@ -52,7 +53,7 @@ func mergeCards(dir string, paperSize, cardSize Size) error {
 			if cnt >= row*column {
 				cnt = 0
 				page++
-				imgA4 = append(imgA4, NewLayer(paperSize))
+				canvases = append(canvases, NewLayer(paperSize))
 			}
 			img, err := DecodeImage(path)
 			if err != nil {
@@ -62,7 +63,7 @@ func mergeCards(dir string, paperSize, cardSize Size) error {
 			cc := (cnt / row)
 			x := cr*(cardSize.Width+buffer) + buffer/2
 			y := cc*(cardSize.Height+buffer) + buffer/2
-			if err = imgA4[page].OverwriteImage(img, image.Point{X: x, Y: y}); err != nil {
+			if err = canvases[page].OverwriteImage(img, image.Point{X: x, Y: y}); err != nil {
 				return fmt.Errorf("failed to overwrite image(%s): %w", path, err)
 			}
 
@@ -75,18 +76,14 @@ func mergeCards(dir string, paperSize, cardSize Size) error {
 		fmt.Printf("error walking the path %v: %v\n", dir, err)
 	}
 
-	// ファイルに保存
-	od := "./tmp_%d.png"
-	for i, img := range imgA4 {
-		p := fmt.Sprintf(od, i)
-		if err := exportImage(p, img.Image); err != nil {
-			return fmt.Errorf("failed to export card(%s): %w", od, err)
-		}
+	if err := canvases.ExportImages(outDir); err != nil {
+		return fmt.Errorf("failed to export images: %w", err)
 	}
 
 	return nil
 }
 
+// create white paper of the specified size
 func whitePaper(size Size) *image.RGBA {
 
 	img := image.NewRGBA(image.Rect(0, 0, size.Width, size.Height))
@@ -100,17 +97,19 @@ func whitePaper(size Size) *image.RGBA {
 	return img
 }
 
-func NewLayer(size Size) BaseLayer {
-	return BaseLayer{
+// NewLayer creates a new layer of the specified size.
+func NewLayer(size Size) Canvas {
+	return Canvas{
 		Image: whitePaper(size),
 	}
 }
 
-func (b *BaseLayer) OverwriteImage(writeImg image.Image, start image.Point) error {
+// OverwriteImage overwrites the image at the specified position by the writeImg.
+func (c *Canvas) OverwriteImage(writeImg image.Image, start image.Point) error {
 	bnd := writeImg.Bounds()
 	w := bnd.Max.X - bnd.Min.X
 	h := bnd.Max.Y - bnd.Min.Y
-	if b.Image.Bounds().Max.X < start.X+w || b.Image.Bounds().Max.Y < start.Y+h {
+	if c.Image.Bounds().Max.X < start.X+w || c.Image.Bounds().Max.Y < start.Y+h {
 		return fmt.Errorf("out of bounds: %d, %d", start.X+w, start.Y+h)
 	}
 
@@ -118,7 +117,18 @@ func (b *BaseLayer) OverwriteImage(writeImg image.Image, start image.Point) erro
 		for y := start.Y; y < start.Y+h; y++ {
 			px := x - start.X
 			py := y - start.Y
-			b.Image.Set(x, y, writeImg.At(px, py))
+			c.Image.Set(x, y, writeImg.At(px, py))
+		}
+	}
+	return nil
+}
+
+func (cs Canvases) ExportImages(dir string) error {
+	d := dir + "/tmp_%d.png"
+	for i, img := range cs {
+		p := fmt.Sprintf(d, i)
+		if err := exportImage(p, img.Image); err != nil {
+			return fmt.Errorf("failed to export card(%s): %w", d, err)
 		}
 	}
 	return nil
