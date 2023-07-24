@@ -38,7 +38,7 @@ type (
 
 func BuildGenerator(output, fontPath string) Generator {
 	if output == "" {
-		output = "./temporary/"
+		output = "./temporary"
 	}
 	if fontPath == "" {
 		fontPath = "./static/fonts/AP.ttf"
@@ -50,7 +50,7 @@ func BuildGenerator(output, fontPath string) Generator {
 }
 
 func (g Generator) Generate(cards Cards) error {
-	folder := filepath.Dir(g.output)
+	folder := filepath.Dir(g.output + "/")
 	err := os.MkdirAll(folder, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to create folder(%s): %w", folder, err)
@@ -89,7 +89,7 @@ func (g Generator) generateCard(c Card, name string, width, height int) error {
 		d.DrawString(s.text)
 	}
 
-	fn := g.output + name + ".png"
+	fn := g.output + "/" + name + ".png"
 	if err := exportImage(fn, img); err != nil {
 		return fmt.Errorf("failed to export card(%s): %w", name, err)
 	}
