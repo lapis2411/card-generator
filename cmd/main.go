@@ -40,16 +40,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	styles, err := generator.CSVDecoder.DecodeStyles(style)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	card, err := ioutil.ReadFile(*cardsPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	cards, err := generator.CSVDecoder.DecodeCards(card, styles)
+
+	cards, err := generator.MakeCards(style, card)
 	if err != nil {
 		log.Fatal(err)
 	}

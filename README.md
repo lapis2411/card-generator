@@ -11,5 +11,5 @@ generate -cards ./sample/testCard.csv -style ./sample/testStyle.csv -font ./font
 ```
 If you want to output the image in a composite form
 ```
-generate -cards ./sample/testCard.csv -style ./sample/testStyle.csv -font ./fonts/hogehoge.ttf -output ./generate_with_merge　-merge
+generate -cards ./sample/testCard.csv -style ./sample/testStyle.csv -font ./fonts/hogehoge.ttf -output ./generate_with_merge -merge
 ```
