@@ -38,6 +38,18 @@ type (
 	}
 )
 
+func MakeCards(styles, cards []byte) (Cards, error) {
+	ss, err := CSVDecoder.DecodeStyles(styles)
+	if err != nil {
+		return nil, err
+	}
+	cs, err := CSVDecoder.DecodeCards(cards, ss)
+	if err != nil {
+		return nil, err
+	}
+	return cs, nil
+}
+
 // StylePointer returns pointer to style by style name
 func (s Styles) StylePointer(name string) (*Style, error) {
 	if _, e := s[name]; !e {
