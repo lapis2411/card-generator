@@ -36,6 +36,10 @@ type (
 		fontsize float64
 		rgba     color.RGBA
 	}
+
+	Arrange interface {
+		Arrange([]*image.RGBA) ([]*image.RGBA, error)
+	}
 )
 
 func MakeCards(styles, cards []byte) (Cards, error) {
@@ -95,6 +99,14 @@ func (c *Card) AddStyleText(text string, style *Style) error {
 		style: style,
 	})
 	return nil
+}
+
+func (c Cards) PrintImages() []*image.RGBA {
+	imgs := make([]*image.RGBA, 0)
+	for _, card := range c {
+		imgs = append(imgs, card.PrintImage())
+	}
+	return imgs
 }
 
 // String is stringer for Styles
