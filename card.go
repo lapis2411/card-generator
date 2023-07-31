@@ -10,13 +10,13 @@ import (
 )
 
 type (
-	// Card is a struct for generating card image
+	// CardContent is a struct for generating card image
 	// @TODO CARDの数が多すぎる場合はPoolを検討する
-	Card struct {
+	CardContent struct {
 		styledTexts []StyledText
 		styles      map[string]struct{} // for duplicate style check
 	}
-	Cards map[string]*Card
+	CardContents map[string]*CardContent
 
 	// StyledText is a struct for text and style
 	// This value is used for generating Card
@@ -36,13 +36,9 @@ type (
 		fontsize float64
 		rgba     color.RGBA
 	}
-
-	Arrange interface {
-		Arrange([]*image.RGBA) ([]*image.RGBA, error)
-	}
 )
 
-func MakeCards(styles, cards []byte) (Cards, error) {
+func MakeCards(styles, cards []byte) (CardContents, error) {
 	ss, err := CSVDecoder.DecodeStyles(styles)
 	if err != nil {
 		return nil, err
@@ -71,19 +67,19 @@ func (s *StyledText) Point26_6() fixed.Point26_6 {
 
 // AddStyleText adds styled text to the card of cards
 // name is card name, text is description or some value, style is style for text pointer
-func (c *Cards) AddStyleText(card string, text string, style *Style) error {
+func (c *CardContents) AddStyleText(card string, text string, style *Style) error {
 	if style == nil {
 		return errors.New("style is undefined")
 	}
 	if _, ok := (*c)[card]; !ok {
-		(*c)[card] = &Card{}
+		(*c)[card] = &CardContent{}
 	}
 	return (*c)[card].AddStyleText(text, style)
 }
 
 // AddStyleText adds styled text to single card
 // text is description or some value, style is style for text pointer
-func (c *Card) AddStyleText(text string, style *Style) error {
+func (c *CardContent) AddStyleText(text string, style *Style) error {
 	if _, ok := (*c).styles[style.name]; ok {
 		return errors.New("style is duplicated")
 	}
@@ -99,14 +95,6 @@ func (c *Card) AddStyleText(text string, style *Style) error {
 		style: style,
 	})
 	return nil
-}
-
-func (c Cards) PrintImages() []*image.RGBA {
-	imgs := make([]*image.RGBA, 0)
-	for _, card := range c {
-		imgs = append(imgs, card.PrintImage())
-	}
-	return imgs
 }
 
 // String is stringer for Styles
@@ -128,7 +116,7 @@ func (s Style) String() string {
 }
 
 // String is stringer for Cards
-func (c Cards) String() string {
+func (c CardContents) String() string {
 	st := ""
 	for k, v := range c {
 		st += "key: " + k + "\n"

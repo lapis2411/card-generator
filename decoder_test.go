@@ -115,7 +115,7 @@ func TestCSVCardDecoder(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    Cards
+		want    CardContents
 		wantErr bool
 	}{
 		{
@@ -129,8 +129,8 @@ sub1,description, desc
 main,cost,12`),
 				styles: useStyles,
 			},
-			want: Cards{
-				"main": &Card{
+			want: CardContents{
+				"main": &CardContent{
 					styledTexts: []StyledText{
 						{
 							text:  "some title",
@@ -149,7 +149,7 @@ main,cost,12`),
 						"cost":        {},
 					},
 				},
-				"sub1": &Card{
+				"sub1": &CardContent{
 					styledTexts: []StyledText{
 						{
 							text:  "sub1 title",

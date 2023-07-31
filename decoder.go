@@ -14,7 +14,7 @@ type (
 		// DecodeStyle returns single style
 		DecodeStyles(data []byte) (Styles, error)
 		// DecodeCard returns single card
-		DecodeCards(data []byte, styles Styles) (Cards, error)
+		DecodeCards(data []byte, styles Styles) (CardContents, error)
 	}
 	// csvConverter is a struct for converting csv file
 	CsvDecoder struct{}
@@ -63,8 +63,8 @@ func (c CsvDecoder) DecodeStyles(data []byte) (Styles, error) {
 }
 
 // DecodeCard returns information for generating cards by csv format byte array
-func (c CsvDecoder) DecodeCards(data []byte, styles Styles) (Cards, error) {
-	cards := make(Cards, 0)
+func (c CsvDecoder) DecodeCards(data []byte, styles Styles) (CardContents, error) {
+	cards := make(CardContents, 0)
 	type cardCSV struct {
 		Name  string `csv:"name"`
 		Style string `csv:"style"`
