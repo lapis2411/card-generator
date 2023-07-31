@@ -1,13 +1,17 @@
 package generator
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"image/color"
+	"io"
 	"os"
 
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/transform"
 )
 
 const (
@@ -97,7 +101,11 @@ func (g Generator) generateCard(c CardContent, name string) (Card, error) {
 			Face: ff,
 			Dot:  points,
 		}
-		d.DrawString(s.text)
+		u8, err := SJIStoUTF8(s.text)
+		if err != nil {
+			return Card{}, fmt.Errorf("failed to convert sjis to utf8 %v: %w", []byte(s.text), err)
+		}
+		d.DrawString(u8)
 	}
 
 	return Card{Image: img, Size: g.cardSize}, nil
@@ -137,4 +145,16 @@ func fontFace(fontPath string, opt truetype.Options) (font.Face, error) {
 	}
 	face := truetype.NewFace(ft, &opt)
 	return face, nil
+}
+
+func SJIStoUTF8(s string) (string, error) {
+	u8, err := io.ReadAll(transform.NewReader(
+		bytes.NewReader([]byte(s)),
+		japanese.ShiftJIS.NewDecoder(),
+	))
+	if err != nil {
+		return "", fmt.Errorf("failed to convert sjis to utf8: %w", err)
+	}
+
+	return string(u8), nil
 }
