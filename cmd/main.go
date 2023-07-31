@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -30,17 +29,15 @@ func main() {
 	if outPath == "" {
 		outPath = "./out"
 	}
-	if *merge {
-		outPath = outPath + "/temporary"
-	}
+	createDirIfNotExist(outPath)
 
 	// open file
-	style, err := ioutil.ReadFile(*stylePath)
+	style, err := os.ReadFile(*stylePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	card, err := ioutil.ReadFile(*cardsPath)
+	card, err := os.ReadFile(*cardsPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,14 +46,32 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	g := generator.BuildGenerator(outPath, *fontPath)
-	if err = g.Generate(cards); err != nil {
+	g := generator.NormalSizeCardGenerator(*fontPath)
+	cimgs, err := g.Generate(cards)
+	if err != nil {
 		log.Fatal(err)
 	}
 	if *merge {
-		generator.MergeCards(outPath, *outputPath)
-		if err := os.RemoveAll(outPath); err != nil {
+		l := generator.NewA4Layout()
+		cvs, err := l.Arrange(cimgs)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := cvs.ExportImages(outPath); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		if err := cimgs.ExportImages(outPath); err != nil {
 			log.Fatal(err)
 		}
 	}
+}
+
+func createDirIfNotExist(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, 0755); err != nil {
+			return err
+		}
+	}
+	return nil
 }

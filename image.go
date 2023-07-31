@@ -1,22 +1,16 @@
 package generator
 
 import (
-	"bufio"
 	"fmt"
 	"image"
 	"image/color"
-	"image/png"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
 )
 
 const (
-	widthCard    = 600
-	heightCard   = 800
 	defaultWidth = 30
 	// output       = "../temporary/"
 	// fontPath     = "../static/fonts/AP.ttf"
@@ -31,36 +25,53 @@ type (
 		Height int
 	}
 	Generator struct {
-		output   string
 		fontPath string
+		cardSize Size
+	}
+	Canvas struct {
+		Image *image.RGBA
+		Size  Size
+	}
+	Canvases []Canvas
+	Card     struct {
+		Image *image.RGBA
+		Size  Size
+	}
+	Cards   []Card
+	Arrange interface {
+		// Arrange arranges some images into specified size pages
+		Arrange(Cards) (Canvases, error)
 	}
 )
 
-func BuildGenerator(output, fontPath string) Generator {
-	if output == "" {
-		output = "./temporary"
-	}
+var normalCardSize = Size{Width: 600, Height: 800}
+
+func NormalSizeCardGenerator(fontPath string) Generator {
+	return buildGenerator(fontPath, normalCardSize)
+}
+
+func buildGenerator(fontPath string, cardSize Size) Generator {
 	if fontPath == "" {
 		fontPath = "./static/fonts/AP.ttf"
 	}
 	return Generator{
-		output:   output,
 		fontPath: fontPath,
+		cardSize: cardSize,
 	}
 }
 
-func (g Generator) Generate(cards Cards) error {
-	folder := filepath.Dir(g.output + "/")
-	err := os.MkdirAll(folder, 0755)
-	if err != nil {
-		return fmt.Errorf("failed to create folder(%s): %w", folder, err)
-	}
-	for name, card := range cards {
-		if err := g.generateCard(*card, name, widthCard, heightCard); err != nil {
-			return fmt.Errorf("failed to generate card(%s): %w", name, err)
+func (g Generator) Generate(contents CardContents) (Cards, error) {
+	cs := make(Cards, len(contents))
+	i := 0
+	for name, c := range contents {
+		card, err := g.generateCard(*c, name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate card(%s): %w", name, err)
 		}
+		cs[i] = card
+		i++
 	}
-	return nil
+	return cs, nil
 }
 
 // generateCard is a function for exporting a card image
@@ -68,17 +79,17 @@ func (g Generator) Generate(cards Cards) error {
 // TODO: FontSizeと文字の位置に応じてフォントサイズや改行を調整する
 // 例えばタイトルが長くなりそうな時は2行にしてフォントを小さくする、など
 // 描画領域を指定する形のほうがよさげか？いずれにしてもサイトがざっとできてから着手
-func (g Generator) generateCard(c Card, name string, width, height int) error {
-	img, err := templateCard(border, Size{width, height}, defaultWidth)
+func (g Generator) generateCard(c CardContent, name string) (Card, error) {
+	img, err := templateCard(border, g.cardSize, defaultWidth)
 	if err != nil {
-		return fmt.Errorf("failed to generate card(%s): %w", name, err)
+		return Card{}, fmt.Errorf("failed to generate card(%s): %w", name, err)
 	}
 	// Cardにしたがって、画像に文字を書き込む
 	for _, s := range c.styledTexts {
 		points := s.Point26_6()
 		ff, err := fontFace(g.fontPath, truetype.Options{Size: s.style.fontsize})
 		if err != nil {
-			return fmt.Errorf("failed to generate fontface(%s): %w", name, err)
+			return Card{}, fmt.Errorf("failed to generate fontface(%s): %w", name, err)
 		}
 		d := &font.Drawer{
 			Dst:  img,
@@ -89,11 +100,7 @@ func (g Generator) generateCard(c Card, name string, width, height int) error {
 		d.DrawString(s.text)
 	}
 
-	fn := g.output + "/" + name + ".png"
-	if err := exportImage(fn, img); err != nil {
-		return fmt.Errorf("failed to export card(%s): %w", name, err)
-	}
-	return nil
+	return Card{Image: img, Size: g.cardSize}, nil
 }
 
 // 処理時間かかるようなら毎回生成するのではなく、テンプレートを用意しておく
@@ -103,7 +110,7 @@ func templateCard(borderCol color.RGBA, size Size, width int) (*image.RGBA, erro
 	}
 	img := image.NewRGBA(image.Rect(0, 0, size.Width, size.Height))
 	for x := 0; x < size.Width; x++ {
-		for y := 0; y < heightCard; y++ {
+		for y := 0; y < size.Height; y++ {
 			if isBorder(size, x, y, width) {
 				img.Set(x, y, borderCol)
 			} else {
@@ -120,7 +127,7 @@ func isBorder(size Size, x, y, width int) bool {
 
 func fontFace(fontPath string, opt truetype.Options) (font.Face, error) {
 	// need japanese font to write japanese
-	ftBin, err := ioutil.ReadFile(fontPath)
+	ftBin, err := os.ReadFile(fontPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load font(%s): %w", fontPath, err)
 	}
@@ -130,39 +137,4 @@ func fontFace(fontPath string, opt truetype.Options) (font.Face, error) {
 	}
 	face := truetype.NewFace(ft, &opt)
 	return face, nil
-}
-
-func exportImage(path string, image image.Image) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("failed to create file(%s): %w", path, err)
-	}
-	defer f.Close()
-
-	b := bufio.NewWriter(f)
-	if err := png.Encode(b, image); err != nil {
-		return fmt.Errorf("failed to encode card image: %w", err)
-	}
-	if err := b.Flush(); err != nil {
-		return fmt.Errorf("failed to flush buffer: %w", err)
-	}
-	return nil
-}
-
-func DecodeImage(path string) (image.Image, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open file(%s): %v", path, err)
-	}
-	defer f.Close()
-
-	img, err := png.Decode(f)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode image: %v", err)
-	}
-	rgba, ok := img.(*image.RGBA)
-	if !ok {
-		return nil, fmt.Errorf("failed to convert image to RGBA")
-	}
-	return rgba, nil
 }
