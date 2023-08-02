@@ -111,6 +111,14 @@ func (g Generator) generateCard(c CardContent, name string) (Card, error) {
 	return Card{Image: img, Size: g.cardSize}, nil
 }
 
+func (c Canvases) ToImageRGBA() []*image.RGBA {
+	imgs := make([]*image.RGBA, len(c))
+	for i, canvas := range c {
+		imgs[i] = canvas.Image
+	}
+	return imgs
+}
+
 // 処理時間かかるようなら毎回生成するのではなく、テンプレートを用意しておく
 func templateCard(borderCol color.RGBA, size Size, width int) (*image.RGBA, error) {
 	if size.Width < width*2 || size.Height < width*2 || size.Width < 0 || size.Height < 0 {
