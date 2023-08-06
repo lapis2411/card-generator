@@ -1,0 +1,35 @@
+@startuml
+top to bottom direction
+package entity {
+    class card
+    class style
+}
+
+package usecase {
+    class generate
+    class generate_interface
+    class sort
+}
+
+package InterfaceAdapter{
+    class image
+    class layout
+    class decoder
+    class decoder_interface
+}
+
+package Details {
+    class import
+    class export
+}
+
+generate -up-> card
+generate -up-> style
+generate -down-> generate_interface
+image -up-> generate_interface
+layout -up-> generate_interface
+decoder -up-> generate_interface
+decoder -down-> decoder_interface
+import -up-> decoder_interface
+export -up-> decoder_interface
+@enduml
