@@ -2,8 +2,9 @@
 top to bottom direction
 package entity {
     class card
+    class formatted_text
+    class image
     class style
-    class sort
 }
 
 package usecase {
@@ -23,11 +24,10 @@ package Details {
     class export
 }
 
-generate -up-> sort
-generate -up-> card
-generate -up-> style
-generate -down-> generate_interface
-image -up-> generate_interface
+generate .up.> card
+generate .up.> formatted_text
+generate .up.> image
+generate .up.> style
 layout -up-> generate_interface
 decoder -up-> generate_interface
 decoder -down-> decoder_interface
