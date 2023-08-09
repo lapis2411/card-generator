@@ -1,4 +1,4 @@
-package generator
+package driver
 
 import (
 	"image"
