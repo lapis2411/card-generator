@@ -15,11 +15,14 @@ type (
 		Size  Size
 	}
 
-	ImageRepository interface {
+	ImageAdapter interface {
 		// GenerateCardImages generates card images from card contents
-		GenerateCardImages([]Card) ([]Image, error)
+		GenerateCardImages([]Card) (map[string]Image, error)
 		// GeneratePrintImages generates card image for print from card contents
 		GeneratePrintImages([]Image) ([]Image, error)
+	}
+
+	ExportImageAdapter interface {
 		// Save saves images to file
 		Save([]Image, string) error
 	}

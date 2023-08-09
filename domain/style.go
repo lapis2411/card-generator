@@ -19,7 +19,7 @@ type (
 		rgba     color.RGBA
 	}
 
-	StyleRepository interface {
+	StyleAdapter interface {
 		// Styles returns all styles
 		StylesMap() (map[string]Style, error)
 	}

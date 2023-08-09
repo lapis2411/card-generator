@@ -9,6 +9,13 @@ type FormattedText struct {
 	style    *Style // have pointer to style to save memory
 }
 
+func NewFormattedText(sentence string, style *Style) FormattedText {
+	return FormattedText{
+		sentence: sentence,
+		style:    style,
+	}
+}
+
 func (s *FormattedText) Point26_6() fixed.Point26_6 {
 	return fixed.Point26_6{
 		X: fixed.Int26_6(s.style.position.X * 64),
