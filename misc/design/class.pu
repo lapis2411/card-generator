@@ -8,29 +8,41 @@ package entity {
 }
 
 package usecase {
+    class export
     class generate
-    class generate_interface
 }
 
 package InterfaceAdapter{
-    class image
-    class layout
-    class decoder
-    class decoder_interface
+    class a_image
+    interface generate_interface
+    class a_export
+    interface export_interface
+    class a_card
+    interface decoder_interface
 }
 
-package Details {
-    class import
-    class export
+package driver {
+    class d_image
+    class d_export
+    class d_csv_decoder
 }
 
-generate .up.> card
-generate .up.> formatted_text
-generate .up.> image
-generate .up.> style
-layout -up-> generate_interface
-decoder -up-> generate_interface
-decoder -down-> decoder_interface
-import -up-> decoder_interface
-export -up-> decoder_interface
+generate -up-> card
+generate -up-> formatted_text
+generate -up-> image
+generate -up-> style
+export   -up-> card
+export   -up-> formatted_text
+export   -up-> image
+export   -up-> style
+a_image .up.> image
+a_export .up.> image
+a_card .up.> card
+a_image -down-> generate_interface
+a_export -down-> export_interface
+a_card -down-> decoder_interface
+d_image -down-> generate_interface
+d_export -up-> export_interface
+d_csv_decoder -up-> decoder_interface
+
 @enduml
