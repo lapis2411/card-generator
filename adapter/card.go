@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/lapis2411/card-generator/domain"
 )
@@ -38,16 +39,12 @@ func (cr cardAdapter) Fetch(style, card []byte) ([]domain.Card, error) {
 	for key := range cts {
 		keys = append(keys, key)
 	}
-	sk := sortStrings(keys)
+	sk := sort.StringSlice(keys)
 
 	cds := make([]domain.Card, 0, len(cts))
 	for _, key := range sk {
-		cds = append(cds, domain.NewCard(cts[key]))
+		cds = append(cds, domain.NewCard(cts[key], key))
 	}
 
 	return cds, nil
-}
-
-func sortStrings(strs []string) []string {
-	return strs
 }

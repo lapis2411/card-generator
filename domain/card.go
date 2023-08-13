@@ -4,8 +4,8 @@ type (
 	// CardContent is a struct for generating card image
 	// @TODO CARDの数が多すぎる場合はPoolを検討する
 	Card struct {
-		name           string
 		formattedTexts []FormattedText
+		name           string
 	}
 
 	CardAdapter interface {
@@ -15,19 +15,19 @@ type (
 )
 
 // NewCard returns new card
-func NewCard(n string, f []FormattedText) Card {
+func NewCard(f []FormattedText, n string) Card {
 	return Card{
-		name:           n,
 		formattedTexts: f,
+		name:           n,
 	}
-}
-
-// Name returns card name
-func (c Card) Name() string {
-	return c.name
 }
 
 // FormattedTexts returns formatted texts
 func (c Card) FormattedTexts() []FormattedText {
 	return c.formattedTexts
+}
+
+// Name returns name
+func (c Card) Name() string {
+	return c.name
 }

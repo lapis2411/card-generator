@@ -34,10 +34,10 @@ func NewStyle(name string, position image.Point, fontsize float64, rgba color.RG
 	}
 }
 
-// StylePointer returns pointer to style by style name
-// func (s Styles) StylePointer(name string) (*Style, error) {
-// 	if _, e := s[name]; !e {
-// 		return nil, errors.New("style is undefined")
-// 	}
-// 	return s[name], nil
-// }
+func (s Style) FontSize() float64 {
+	return s.fontsize
+}
+
+func (s Style) RGBA() color.RGBA {
+	return s.rgba
+}
