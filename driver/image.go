@@ -22,7 +22,8 @@ const (
 )
 
 type (
-	imageEncoder struct {
+	imageDriver struct {
+		size     common.Size
 		fontPath string
 	}
 )
@@ -30,15 +31,16 @@ type (
 var border = color.RGBA{R: 0x55, G: 0x3a, B: 0xed, A: 0xff}
 var white = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
 
-func NewImageEncoder(fp string) adapter.Encoder {
-	return imageEncoder{
+func NewImageDriver(s common.Size, fp string) adapter.ImageDriver {
+	return imageDriver{
+		size:     s,
 		fontPath: fp,
 	}
 }
 
-func (i imageEncoder) EncodeImage(c domain.Card, size common.Size) (domain.Image, error) {
-	bw := int(float64(size.Width()) * WidthRate)
-	img, err := templateCard(border, size, bw)
+func (i imageDriver) ImageEncode(c domain.Card) (domain.Image, error) {
+	bw := int(float64(i.size.Width()) * WidthRate)
+	img, err := templateCard(border, i.size, bw)
 	if err != nil {
 		return domain.Image{}, fmt.Errorf("failed to generate card(%s): %w", c.Name(), err)
 	}
@@ -58,18 +60,18 @@ func (i imageEncoder) EncodeImage(c domain.Card, size common.Size) (domain.Image
 		}
 		u8, err := SJIStoUTF8(ft.Text())
 		if err != nil {
-			return domain.Image{}, fmt.Errorf("failed to convert sjis to utf8 %v: %w", []byte(ft.text), err)
+			return domain.Image{}, fmt.Errorf("failed to convert sjis to utf8 %v: %w", []byte(ft.Text()), err)
 		}
 		d.DrawString(u8)
 	}
 
-	return domain.NewImage(img, size, c.Name()), nil
+	return domain.NewImage(img, i.size, c.Name()), nil
 }
 
 // 処理時間かかるようなら毎回生成するのではなく、テンプレートを用意しておく
 func templateCard(borderCol color.RGBA, size common.Size, width int) (*image.RGBA, error) {
 	if size.Width() < width*2 || size.Height() < width*2 || size.Width() < 0 || size.Height() < 0 {
-		return nil, fmt.Errorf("invalid size: %d, %d", size.Width, size.Height)
+		return nil, fmt.Errorf("invalid size: %d, %d", size.Width(), size.Height())
 	}
 	img := image.NewRGBA(image.Rect(0, 0, size.Width(), size.Height()))
 	for x := 0; x < size.Width(); x++ {

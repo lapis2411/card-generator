@@ -5,7 +5,11 @@ import (
 	"log"
 	"os"
 
-	generator "github.com/lapis2411/card-generator"
+	"github.com/lapis2411/card-generator/adapter"
+	"github.com/lapis2411/card-generator/common"
+	"github.com/lapis2411/card-generator/driver"
+	"github.com/lapis2411/card-generator/driver/template"
+	"github.com/lapis2411/card-generator/usecase"
 )
 
 func main() {
@@ -42,28 +46,24 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cards, err := generator.MakeCards(style, card)
-	if err != nil {
-		log.Fatal(err)
-	}
-	g := generator.NormalSizeCardGenerator(*fontPath)
-	cimgs, err := g.Generate(cards)
-	if err != nil {
-		log.Fatal(err)
-	}
+	//
+	dc := driver.NewCsvDecoder()
+	ca := adapter.NewCardAdapter(dc)
+
+	nCard := common.NewSize(600, 800)
+	id := driver.NewImageDriver(nCard, *fontPath)
+	t := template.NewA4Template()
+	ia := adapter.NewImageAdapter(id, t)
+
+	ue := usecase.NewExport(ca, ia)
+
 	if *merge {
-		l := generator.NewA4Layout()
-		cvs, err := l.Arrange(cimgs)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := cvs.ExportImages(outPath); err != nil {
-			log.Fatal(err)
-		}
+		err = ue.ExportCardImagesForPrint(style, card)
 	} else {
-		if err := cimgs.ExportImages(outPath); err != nil {
-			log.Fatal(err)
-		}
+		err = ue.ExportCardImages(style, card)
+	}
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 

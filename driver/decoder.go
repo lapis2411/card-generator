@@ -1,7 +1,6 @@
 package driver
 
 import (
-	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -35,7 +34,6 @@ func (c *csvDecoder) DecodeStyles(data []byte) (map[string]*domain.Style, error)
 		ColorA   int     `csv:"color_a"`
 	}
 	s := map[string]*domain.Style{}
-	dup := make(map[string]struct{})
 	if err := gocsv.UnmarshalBytesToCallback(data, func(sc styleCSV) error {
 		p := image.Point{sc.X, sc.Y}
 		rgba := color.RGBA{
@@ -44,8 +42,9 @@ func (c *csvDecoder) DecodeStyles(data []byte) (map[string]*domain.Style, error)
 			uint8(sc.ColorB),
 			uint8(sc.ColorA),
 		}
-		if _, ok := dup[sc.Name]; ok {
-			return errors.New("style name is duplicated")
+		if _, ok := s[sc.Name]; ok {
+			fmt.Println("duplicated")
+			return fmt.Errorf("style name %s is duplicated", sc.Name)
 		}
 		st := domain.NewStyle(sc.Name, p, sc.FontSize, rgba)
 		s[sc.Name] = &st

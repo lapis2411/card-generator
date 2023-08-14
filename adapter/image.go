@@ -3,30 +3,29 @@ package adapter
 import (
 	"fmt"
 
-	"github.com/lapis2411/card-generator/domain"
 	"github.com/lapis2411/card-generator/common"
+	"github.com/lapis2411/card-generator/domain"
 )
 
 type (
 	// ImageAdapter is an interface for generating images
 	imageAdapter struct {
-		encoder  Encoder
+		encoder  ImageDriver
 		template Template
-		size    common.Size
+		cardSize common.Size
 	}
-	Encoder interface {
-		EncodeImage(domain.Card, common.Size) (domain.Image, error)
+	ImageDriver interface {
+		ImageEncode(domain.Card) (domain.Image, error)
 	}
 	Template interface {
 		Arrange([]domain.Image) ([]domain.Image, error)
 	}
 )
 
-func NewImageAdapter(e Encoder, t Template, common.Size) domain.ImageAdapter {
+func NewImageAdapter(imgd ImageDriver, t Template) domain.ImageAdapter {
 	return &imageAdapter{
-		encoder:  e,
+		encoder:  imgd,
 		template: t,
-		size:     s,
 	}
 }
 
@@ -34,7 +33,7 @@ func (ia *imageAdapter) GenerateCardImages(cards []domain.Card) ([]domain.Image,
 	cs := make([]domain.Image, 0, len(cards))
 
 	for i, c := range cards {
-		img, err := ia.encoder.EncodeCard(c, ia.size)
+		img, err := ia.encoder.ImageEncode(c)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate %v th card: %w", i, err)
 		}

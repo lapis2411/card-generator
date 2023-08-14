@@ -7,6 +7,13 @@ type (
 	}
 )
 
+func NewSize(w, h int) Size {
+	return Size{
+		width:  w,
+		height: h,
+	}
+}
+
 func (s Size) Width() int {
 	return s.width
 }
