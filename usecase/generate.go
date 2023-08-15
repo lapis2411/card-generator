@@ -13,10 +13,10 @@ type (
 	}
 )
 
-func NewGenerate(ca domain.CardAdapter, ir domain.ImageAdapter) Generate {
+func NewGenerate(ca domain.CardAdapter, ia domain.ImageAdapter) Generate {
 	return Generate{
 		cardAdapter:  ca,
-		imageAdapter: ir,
+		imageAdapter: ia,
 	}
 }
 

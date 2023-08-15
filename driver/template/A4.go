@@ -39,29 +39,54 @@ func (a4Template) Arrange(imgs []domain.Image) ([]domain.Image, error) {
 func merge(imgs []domain.Image, pageSize, cardSize common.Size) ([]domain.Image, error) {
 	row := pageSize.Width() / (cardSize.Width() + Buffer)
 	column := pageSize.Height() / (cardSize.Height() + Buffer)
-	canvases := make([]domain.Image, 1)
 	cnt := 0
 	bi := newPage(pageSize)
-	page := 1
+	pages := []*image.RGBA{bi}
 	for _, img := range imgs {
 		// out of 1 page max size
 		if cnt >= row*column {
 			cnt = 0
-			canvases = append(canvases, domain.NewImage(bi, pageSize, fmt.Sprint("%4d", page)))
-			page++
 			bi = newPage(pageSize)
+			pages = append(pages, bi)
 		}
 		cr := (cnt % row)
 		cc := (cnt / row)
 		x := cr*(cardSize.Width()+Buffer) + Buffer/2
 		y := cc*(cardSize.Height()+Buffer) + Buffer/2
 		if err := overwriteImage(bi, *img.Image(), image.Point{X: x, Y: y}); err != nil {
+			page := len(pages) + 1
 			return nil, fmt.Errorf("failed to overwrite image page %v, row %v, column %v: %w", page, row, column, err)
 		}
 		cnt++
 	}
+	pimgs := make([]domain.Image, 0, len(pages))
+	for i, p := range pages {
+		pimgs = append(pimgs, domain.NewImage(p, pageSize, fmt.Sprintf("%04d", i+1)))
+	}
+	return pimgs, nil
+	// pages := make([]domain.Image, 1)
+	// cnt := 0
+	// bi := newPage(pageSize)
+	// page := 1
+	// for _, img := range imgs {
+	// 	// out of 1 page max size
+	// 	if cnt >= row*column {
+	// 		cnt = 0
+	// 		pages = append(pages, domain.NewImage(bi, pageSize, fmt.Sprint("%4d", page)))
+	// 		page++
+	// 		bi = newPage(pageSize)
+	// 	}
+	// 	cr := (cnt % row)
+	// 	cc := (cnt / row)
+	// 	x := cr*(cardSize.Width()+Buffer) + Buffer/2
+	// 	y := cc*(cardSize.Height()+Buffer) + Buffer/2
+	// 	if err := overwriteImage(bi, *img.Image(), image.Point{X: x, Y: y}); err != nil {
+	// 		return nil, fmt.Errorf("failed to overwrite image page %v, row %v, column %v: %w", page, row, column, err)
+	// 	}
+	// 	cnt++
+	// }
 
-	return canvases, nil
+	// return pages, nil
 }
 
 // newPage creates a new layer of the specified size.

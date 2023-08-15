@@ -14,9 +14,10 @@ type (
 	}
 )
 
-func NewExport(ca domain.CardAdapter, ia domain.ImageAdapter) Export {
+func NewExport(ca domain.CardAdapter, ia domain.ImageAdapter, eia domain.ExportImageAdapter) Export {
 	return Export{
-		generate: NewGenerate(ca, ia),
+		generate:           NewGenerate(ca, ia),
+		exportImageAdapter: eia,
 	}
 }
 

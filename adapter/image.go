@@ -10,9 +10,9 @@ import (
 type (
 	// ImageAdapter is an interface for generating images
 	imageAdapter struct {
-		encoder  ImageDriver
-		template Template
-		cardSize common.Size
+		imageDriver ImageDriver
+		template    Template
+		cardSize    common.Size
 	}
 	ImageDriver interface {
 		ImageEncode(domain.Card) (domain.Image, error)
@@ -24,16 +24,16 @@ type (
 
 func NewImageAdapter(imgd ImageDriver, t Template) domain.ImageAdapter {
 	return &imageAdapter{
-		encoder:  imgd,
-		template: t,
+		imageDriver: imgd,
+		template:    t,
 	}
 }
 
 func (ia *imageAdapter) GenerateCardImages(cards []domain.Card) ([]domain.Image, error) {
 	cs := make([]domain.Image, 0, len(cards))
-
 	for i, c := range cards {
-		img, err := ia.encoder.ImageEncode(c)
+
+		img, err := ia.imageDriver.ImageEncode(c)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate %v th card: %w", i, err)
 		}
