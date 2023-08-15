@@ -1,11 +1,19 @@
 package main
 
 import (
+	"bufio"
 	"flag"
+	"fmt"
+	"image/png"
 	"log"
 	"os"
 
-	generator "github.com/lapis2411/card-generator"
+	"github.com/lapis2411/card-generator/adapter"
+	"github.com/lapis2411/card-generator/common"
+	"github.com/lapis2411/card-generator/domain"
+	"github.com/lapis2411/card-generator/driver"
+	"github.com/lapis2411/card-generator/driver/template"
+	"github.com/lapis2411/card-generator/usecase"
 )
 
 func main() {
@@ -42,28 +50,41 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cards, err := generator.MakeCards(style, card)
-	if err != nil {
-		log.Fatal(err)
-	}
-	g := generator.NormalSizeCardGenerator(*fontPath)
-	cimgs, err := g.Generate(cards)
-	if err != nil {
-		log.Fatal(err)
-	}
+	//
+	dc := driver.NewCsvDecoder()
+	ca := adapter.NewCardAdapter(dc)
+
+	nCard := common.NewSize(600, 800)
+	id := driver.NewImageDriver(nCard, *fontPath)
+	t := template.NewA4Template()
+	ia := adapter.NewImageAdapter(id, t)
+
+	// ed := dRxport.NewPngExporter()
+	// eia := adapter.NewExporter(outPath, ed)
+	// ue := usecase.NewExport(ca, ia, eia)
+
+	// if *merge {
+	// 	err = ue.ExportCardImagesForPrint(style, card)
+	// } else {
+	// 	err = ue.ExportCardImages(style, card)
+	// }
+
+	ug := usecase.NewGenerate(ca, ia)
+	var di []domain.Image
 	if *merge {
-		l := generator.NewA4Layout()
-		cvs, err := l.Arrange(cimgs)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := cvs.ExportImages(outPath); err != nil {
-			log.Fatal(err)
-		}
+		di, err = ug.GenerateCardImages(style, card)
 	} else {
-		if err := cimgs.ExportImages(outPath); err != nil {
+		di, err = ug.GeneratePrintImages(style, card)
+	}
+	fmt.Println(len(di))
+	for _, d := range di {
+		path := fmt.Sprintf("%s/%s.png", outPath, d.Name())
+		if err := exportImage(path, d); err != nil {
 			log.Fatal(err)
 		}
+	}
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -72,6 +93,23 @@ func createDirIfNotExist(path string) error {
 		if err := os.MkdirAll(path, 0755); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func exportImage(path string, image domain.Image) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("failed to create file(%s): %w", path, err)
+	}
+	defer f.Close()
+
+	b := bufio.NewWriter(f)
+	if err := png.Encode(b, image.Image()); err != nil {
+		return fmt.Errorf("failed to encode card image: %w", err)
+	}
+	if err := b.Flush(); err != nil {
+		return fmt.Errorf("failed to flush buffer: %w", err)
 	}
 	return nil
 }
