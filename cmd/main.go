@@ -12,7 +12,6 @@ import (
 	"github.com/lapis2411/card-generator/common"
 	"github.com/lapis2411/card-generator/domain"
 	"github.com/lapis2411/card-generator/driver"
-	"github.com/lapis2411/card-generator/driver/template"
 	"github.com/lapis2411/card-generator/usecase"
 )
 
@@ -58,7 +57,7 @@ func main() {
 
 	nCard := common.NewSize(600, 800)
 	id := driver.NewImageDriver(nCard, *fontPath)
-	t := template.NewA4Template()
+	t := driver.NewA4Template()
 	ia := adapter.NewImageAdapter(id, t)
 
 	// ed := dRxport.NewPngExporter()

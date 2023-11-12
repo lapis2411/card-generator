@@ -1,4 +1,4 @@
-package template
+package driver
 
 import (
 	"fmt"
@@ -15,21 +15,28 @@ const (
 )
 
 type (
-	a4Template struct{}
+	Template struct {
+		size common.Size
+	}
 )
 
-// 300dpi
-var sizeA4 = common.NewSize(2480, 3508)
-
 func NewA4Template() adapter.Template {
-	return a4Template{}
+	return Template{
+		size: common.NewSize(2480, 3508),
+	}
+}
+
+func NewJISB5Template() adapter.Template {
+	return Template{
+		size: common.NewSize(1900, 2500),
+	}
 }
 
 // Cardサイズが同じであること前提
-func (a4Template) Arrange(imgs []domain.Image) ([]domain.Image, error) {
-	// サイズに合わせてA4印刷用のレイアウトを作成
+func (t Template) Arrange(imgs []domain.Image) ([]domain.Image, error) {
+	// サイズに合わせて印刷用のレイアウトを作成
 	sizeCard := imgs[0].Size()
-	cs, err := merge(imgs, sizeA4, sizeCard)
+	cs, err := merge(imgs, t.size, sizeCard)
 	if err != nil {
 		return nil, fmt.Errorf("failed to merge images: %w", err)
 	}
@@ -64,29 +71,6 @@ func merge(imgs []domain.Image, pageSize, cardSize common.Size) ([]domain.Image,
 		pimgs = append(pimgs, domain.NewImage(p, pageSize, fmt.Sprintf("%04d", i+1)))
 	}
 	return pimgs, nil
-	// pages := make([]domain.Image, 1)
-	// cnt := 0
-	// bi := newPage(pageSize)
-	// page := 1
-	// for _, img := range imgs {
-	// 	// out of 1 page max size
-	// 	if cnt >= row*column {
-	// 		cnt = 0
-	// 		pages = append(pages, domain.NewImage(bi, pageSize, fmt.Sprint("%4d", page)))
-	// 		page++
-	// 		bi = newPage(pageSize)
-	// 	}
-	// 	cr := (cnt % row)
-	// 	cc := (cnt / row)
-	// 	x := cr*(cardSize.Width()+Buffer) + Buffer/2
-	// 	y := cc*(cardSize.Height()+Buffer) + Buffer/2
-	// 	if err := overwriteImage(bi, *img.Image(), image.Point{X: x, Y: y}); err != nil {
-	// 		return nil, fmt.Errorf("failed to overwrite image page %v, row %v, column %v: %w", page, row, column, err)
-	// 	}
-	// 	cnt++
-	// }
-
-	// return pages, nil
 }
 
 // newPage creates a new layer of the specified size.
