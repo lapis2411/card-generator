@@ -24,3 +24,4 @@ go.work
 *static*
 *temporary*
 *.ttf
+/cmd/out/*
