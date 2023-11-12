@@ -37,7 +37,9 @@ func main() {
 	if outPath == "" {
 		outPath = "./out"
 	}
-	createDirIfNotExist(outPath)
+	if err := createDirIfNotExist(outPath); err != nil {
+		log.Fatal(err)
+	}
 
 	// open file
 	style, err := os.ReadFile(*stylePath)
@@ -72,9 +74,9 @@ func main() {
 	ug := usecase.NewGenerate(ca, ia)
 	var di []domain.Image
 	if *merge {
-		di, err = ug.GenerateCardImages(style, card)
-	} else {
 		di, err = ug.GeneratePrintImages(style, card)
+	} else {
+		di, err = ug.GenerateCardImages(style, card)
 	}
 	fmt.Println(len(di))
 	for _, d := range di {
@@ -102,7 +104,11 @@ func exportImage(path string, image domain.Image) error {
 	if err != nil {
 		return fmt.Errorf("failed to create file(%s): %w", path, err)
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	b := bufio.NewWriter(f)
 	if err := png.Encode(b, image.Image()); err != nil {
