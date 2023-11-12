@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/lapis2411/card-generator/common"
 	"github.com/lapis2411/card-generator/domain"
@@ -31,8 +32,10 @@ func NewImageAdapter(imgd ImageDriver, t Template) domain.ImageAdapter {
 
 func (ia *imageAdapter) GenerateCardImages(cards []domain.Card) ([]domain.Image, error) {
 	cs := make([]domain.Image, 0, len(cards))
+	sort.Slice(cards, func(i, j int) bool {
+		return cards[i].Name() < cards[j].Name()
+	})
 	for i, c := range cards {
-
 		img, err := ia.imageDriver.ImageEncode(c)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate %v th card: %w", i, err)
