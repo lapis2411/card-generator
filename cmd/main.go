@@ -12,6 +12,7 @@ import (
 	"github.com/lapis2411/card-generator/common"
 	"github.com/lapis2411/card-generator/domain"
 	"github.com/lapis2411/card-generator/driver"
+	"github.com/lapis2411/card-generator/driver/decoder"
 	"github.com/lapis2411/card-generator/usecase"
 )
 
@@ -52,7 +53,7 @@ func main() {
 	}
 
 	//
-	dc := driver.NewCsvDecoder()
+	dc := decoder.NewCsvDecoder()
 	ca := adapter.NewCardAdapter(dc)
 
 	nCard := common.NewSize(600, 800)
