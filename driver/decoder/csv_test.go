@@ -9,7 +9,7 @@ import (
 	"github.com/lapis2411/card-generator/domain"
 )
 
-func TestCSVDecoder(t *testing.T) {
+func TestCSVDecodeStyle(t *testing.T) {
 	csvDecoder := NewCsvDecoder()
 	type args struct {
 		csv []byte
@@ -74,7 +74,7 @@ title,35,100,100,0,0,0,255`),
 	}
 }
 
-func TestCSVCardDecoder(t *testing.T) {
+func TestCSVDecodeCard(t *testing.T) {
 	csvDecoder := NewCsvDecoder()
 	titleS := domain.NewStyle("title", image.Point{X: 100, Y: 100}, 30, color.RGBA{0, 0, 0, 255})
 	descS := domain.NewStyle("description", image.Point{X: 200, Y: 200}, 15, color.RGBA{100, 150, 200, 255})
