@@ -3,11 +3,6 @@ package driver
 import (
 	"bytes"
 	"fmt"
-	"image"
-	"image/color"
-	"io"
-	"os"
-
 	"github.com/golang/freetype/truetype"
 	"github.com/lapis2411/card-generator/adapter"
 	"github.com/lapis2411/card-generator/common"
@@ -15,6 +10,9 @@ import (
 	"golang.org/x/image/font"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
+	"image"
+	"image/color"
+	"io"
 )
 
 const (
@@ -23,18 +21,18 @@ const (
 
 type (
 	imageDriver struct {
-		size     common.Size
-		fontPath string
+		size common.Size
+		font []byte
 	}
 )
 
 var border = color.RGBA{R: 0x55, G: 0x3a, B: 0xed, A: 0xff}
 var white = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
 
-func NewImageDriver(s common.Size, fp string) adapter.ImageDriver {
+func NewImageDriver(s common.Size, f []byte) adapter.ImageDriver {
 	return imageDriver{
-		size:     s,
-		fontPath: fp,
+		size: s,
+		font: f,
 	}
 }
 
@@ -48,7 +46,7 @@ func (i imageDriver) ImageEncode(c domain.Card) (domain.Image, error) {
 	for _, ft := range c.FormattedTexts() {
 		points := ft.Point26_6()
 		st := ft.Style()
-		ff, err := fontFace(i.fontPath, truetype.Options{Size: st.FontSize()})
+		ff, err := fontFace(i.font, truetype.Options{Size: st.FontSize()})
 		if err != nil {
 			return domain.Image{}, fmt.Errorf("failed to generate fontface(%s): %w", c.Name(), err)
 		}
@@ -90,13 +88,9 @@ func isBorder(size common.Size, x, y, width int) bool {
 	return x < width || x >= size.Width()-width || y < width || y >= size.Height()-width
 }
 
-func fontFace(fontPath string, opt truetype.Options) (font.Face, error) {
+func fontFace(font []byte, opt truetype.Options) (font.Face, error) {
 	// need japanese font to write japanese
-	ftBin, err := os.ReadFile(fontPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load font(%s): %w", fontPath, err)
-	}
-	ft, err := truetype.Parse(ftBin)
+	ft, err := truetype.Parse(font)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse font: %w", err)
 	}
