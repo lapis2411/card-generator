@@ -58,11 +58,7 @@ func (i imageDriver) ImageEncode(c domain.Card) (domain.Image, error) {
 			Face: ff,
 			Dot:  points,
 		}
-		u8, err := SJIStoUTF8(ft.Text())
-		if err != nil {
-			return domain.Image{}, fmt.Errorf("failed to convert sjis to utf8 %v: %w", []byte(ft.Text()), err)
-		}
-		d.DrawString(u8)
+		d.DrawString(ft.Text())
 	}
 
 	return domain.NewImage(img, i.size, c.Name()), nil
