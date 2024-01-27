@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"github.com/lapis2411/card-generator/resources"
 	"image/png"
 	"log"
 	"os"
@@ -57,7 +58,7 @@ func main() {
 	ca := adapter.NewCardAdapter(dc)
 
 	nCard := common.NewSize(600, 800)
-	id := driver.NewImageDriver(nCard, *fontPath)
+	id := driver.NewImageDriver(nCard, resources.APFont)
 	t := driver.NewA4Template()
 	ia := adapter.NewImageAdapter(id, t)
 
