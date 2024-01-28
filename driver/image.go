@@ -37,8 +37,8 @@ func NewImageDriver(s common.Size, f []byte) adapter.ImageDriver {
 }
 
 func (i imageDriver) ImageEncode(c domain.Card) (domain.Image, error) {
-	bw := int(float64(i.size.Width()) * WidthRate)
-	img, err := templateCard(border, i.size, bw)
+	bwidth := float64(i.size.Width()) * WidthRate
+	img, err := templateCard(border, i.size, int(bwidth))
 	if err != nil {
 		return domain.Image{}, fmt.Errorf("failed to generate card(%s): %w", c.Name(), err)
 	}
@@ -56,7 +56,8 @@ func (i imageDriver) ImageEncode(c domain.Card) (domain.Image, error) {
 			Face: ff,
 			Dot:  points,
 		}
-		d.DrawString(ft.Text())
+		sw := float64(i.size.Width()) - 2*bwidth
+		DrawStringWithWrap(d, ft.Text(), int(sw)) // @todo 文字列の幅を指定できるようにする
 	}
 
 	return domain.NewImage(img, i.size, c.Name()), nil
