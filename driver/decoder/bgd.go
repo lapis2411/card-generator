@@ -20,7 +20,7 @@ type (
 		TextData []textData `json:"data"`
 	}
 	textData struct {
-		StyleID int    `json:"styleID"`
+		StyleID string `json:"styleID"`
 		Text    string `json:"text"`
 	}
 )
@@ -61,10 +61,10 @@ func (c *bgdDecoder) DecodeCards(data []byte, styles map[string]*domain.Style) (
 func toFormattedText(td []textData, st map[string]*domain.Style) ([]domain.FormattedText, error) {
 	ft := make([]domain.FormattedText, 0, len(td))
 	for _, v := range td {
-		sname := strconv.Itoa(v.StyleID)
-		st, ok := st[sname]
+		st, ok := st[v.StyleID]
 		if !ok {
-			return nil, fmt.Errorf("%s style is undefined", sname)
+			fmt.Printf("%s", v.StyleID)
+			return nil, fmt.Errorf("style '%s' is undefined", v.StyleID)
 		}
 		ft = append(ft, domain.NewFormattedText(v.Text, st))
 	}
