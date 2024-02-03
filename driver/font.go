@@ -1,7 +1,6 @@
 package driver
 
 import (
-	"fmt"
 	"golang.org/x/image/draw"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
@@ -24,7 +23,6 @@ func DrawStringWithWrap(d *font.Drawer, s string, w int) {
 			c = '?'
 			advance, _ = d.Face.GlyphAdvance(c)
 		}
-		fmt.Printf("%v\n", advance.Round())
 		progress += advance
 		if progress > width {
 			d.Dot.X = originX
